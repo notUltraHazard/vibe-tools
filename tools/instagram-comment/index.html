@@ -1,0 +1,105 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Instagram Comment Generator · Toolbox</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,600;12..96,800&family=Figtree:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../../assets/style.css">
+  <link rel="stylesheet" href="style.css">
+  <script>try { var t = localStorage.getItem('theme'); if (t) document.documentElement.dataset.theme = t; } catch (e) {}</script>
+</head>
+<body>
+  <header class="top">
+    <a class="brand" href="../../">Toolbox</a>
+    <a href="../../" class="tag">All tools</a>
+  </header>
+
+  <main>
+    <section class="hero" style="padding-bottom:1.5rem">
+      <h1 style="font-size:clamp(2rem,6vw,3.5rem)">Instagram comment generator</h1>
+      <p class="lede" style="margin-bottom:0">Make a comment card and download it as a transparent PNG.</p>
+    </section>
+
+    <section class="tool">
+      <form class="panel form" onsubmit="return false">
+        <div class="field">
+          <span class="label">Picture</span>
+          <div class="pic-row">
+            <img id="pic-thumb" class="pic-thumb" alt="Current profile picture">
+            <button type="button" class="btn small" id="upload">Upload</button>
+            <span class="or">or</span>
+            <button type="button" class="btn small" id="randomize">Randomize</button>
+            <input type="file" id="file" accept="image/*" hidden>
+          </div>
+          <p class="hint" id="pic-status"></p>
+        </div>
+
+        <div class="field">
+          <label class="label" for="username">Username</label>
+          <input id="username" type="text" maxlength="30" autocomplete="off" spellcheck="false">
+          <p class="hint"><span id="count">0</span> / 30 characters</p>
+        </div>
+
+        <div class="field">
+          <label class="label" for="comment">Comment</label>
+          <textarea id="comment" rows="3" maxlength="300"></textarea>
+        </div>
+
+        <div class="field">
+          <label class="label" for="replyto">Replying to</label>
+          <input id="replyto" type="text" maxlength="30" autocomplete="off" spellcheck="false" placeholder="Optional">
+        </div>
+
+        <div class="field">
+          <label class="label" for="badge">Badge</label>
+          <select id="badge">
+            <option value="none">No badge</option>
+            <option value="verified">Verified</option>
+            <option value="creator">Creator</option>
+            <option value="pinned">Pinned</option>
+          </select>
+        </div>
+
+        <div class="field">
+          <label class="label" for="color">Color</label>
+          <select id="color">
+            <option value="white">White</option>
+            <option value="black">Black</option>
+            <option value="blue">Blue</option>
+          </select>
+        </div>
+
+        <div class="field">
+          <label class="label" for="lang">Language</label>
+          <select id="lang">
+            <option value="en">English</option>
+            <option value="es">Español</option>
+            <option value="fr">Français</option>
+            <option value="de">Deutsch</option>
+            <option value="pt">Português</option>
+            <option value="it">Italiano</option>
+          </select>
+        </div>
+      </form>
+
+      <div class="panel preview">
+        <div class="actions">
+          <button type="button" class="btn" id="reset">Reset</button>
+          <button type="button" class="btn primary" id="download">Download</button>
+        </div>
+        <div class="stage-wrap">
+          <div id="stage" class="stage"></div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer>Hosted on GitHub Pages</footer>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>

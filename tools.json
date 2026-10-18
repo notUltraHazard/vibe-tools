@@ -1,1 +1,9 @@
-[]
+[
+  {
+    "name": "Instagram Comment Generator",
+    "description": "Make a custom Instagram comment card and download it as a transparent PNG.",
+    "icon": "💬",
+    "tags": ["instagram", "generator"],
+    "path": "tools/instagram-comment/"
+  }
+]
