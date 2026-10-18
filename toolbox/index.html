@@ -1,0 +1,49 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Toolbox</title>
+  <meta name="description" content="My personal collection of small web tools.">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🧰</text></svg>">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,600;12..96,800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="assets/style.css">
+  <script>
+    // Apply saved theme before paint to avoid a flash
+    try { var t = localStorage.getItem('theme'); if (t) document.documentElement.dataset.theme = t; } catch (e) {}
+  </script>
+</head>
+<body>
+  <header class="top">
+    <a class="brand" href="./">Toolbox</a>
+    <button id="theme" class="icon-btn" aria-label="Toggle light and dark theme">◐</button>
+  </header>
+
+  <main>
+    <section class="hero">
+      <h1>Small tools,<br>made to be used.</h1>
+      <p class="lede">A growing shelf of generators and helpers. Pick one, use it, move on.</p>
+
+      <label class="cmd" for="search">
+        <span class="prompt" aria-hidden="true">/</span>
+        <input id="search" type="search" placeholder="Search tools" autocomplete="off" spellcheck="false">
+        <kbd aria-hidden="true">/</kbd>
+      </label>
+      <div id="tags" class="tags" role="group" aria-label="Filter by tag"></div>
+    </section>
+
+    <section aria-live="polite">
+      <div id="grid" class="grid"></div>
+      <p id="empty" class="empty" hidden></p>
+    </section>
+  </main>
+
+  <footer>
+    <span id="year"></span> · Hosted on GitHub Pages
+  </footer>
+
+  <script src="assets/app.js"></script>
+</body>
+</html>
