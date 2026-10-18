@@ -5,5 +5,12 @@
     "icon": "💬",
     "tags": ["instagram", "generator"],
     "path": "tools/instagram-comment/"
+  },
+  {
+    "name": "Steam Case Generator",
+    "description": "Put a game cover into a Steam case. Paste a Steam link or upload your own art.",
+    "icon": "🎮",
+    "tags": ["steam", "generator"],
+    "path": "tools/steam-case/"
   }
 ]

@@ -1,0 +1,71 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Steam Case Generator · Toolbox</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,600;12..96,800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../../assets/style.css">
+  <link rel="stylesheet" href="style.css">
+  <script>try { var t = localStorage.getItem('theme'); if (t) document.documentElement.dataset.theme = t; } catch (e) {}</script>
+</head>
+<body>
+  <header class="top">
+    <a class="brand" href="../../">Toolbox</a>
+    <a href="../../" class="tag">All tools</a>
+  </header>
+
+  <main>
+    <section class="hero" style="padding-bottom:1.5rem">
+      <h1 style="font-size:clamp(2rem,6vw,3.5rem)">Steam case generator</h1>
+      <p class="lede" style="margin-bottom:0">Put a game cover inside a Steam case and download it as a PNG.</p>
+    </section>
+
+    <section class="tool">
+      <form class="panel form" onsubmit="return false">
+        <div class="field">
+          <label class="label" for="steam">Steam link or app ID</label>
+          <div class="row">
+            <input id="steam" type="text" autocomplete="off" spellcheck="false" placeholder="store.steampowered.com/app/1245620">
+            <button type="button" class="btn primary" id="fetch">Fetch cover</button>
+          </div>
+          <p class="hint">Pulls the game's 600 × 900 library art from Steam.</p>
+        </div>
+
+        <p class="divider"><span>or</span></p>
+
+        <div class="field">
+          <span class="label">Your own image</span>
+          <div class="row">
+            <button type="button" class="btn" id="upload">Upload image</button>
+            <input type="file" id="file" accept="image/*" hidden>
+          </div>
+          <p class="hint">Best at 600 × 900 px. Other sizes are cropped to fit.</p>
+        </div>
+
+        <div class="field">
+          <label class="label" for="radius">Corner rounding</label>
+          <input id="radius" type="range" min="0" max="24" value="8">
+        </div>
+
+        <p id="status" class="status" role="status" aria-live="polite"></p>
+      </form>
+
+      <div class="panel preview">
+        <div class="actions">
+          <button type="button" class="btn" id="reset">Reset</button>
+          <button type="button" class="btn primary" id="download" disabled>Download</button>
+        </div>
+        <div class="stage-wrap">
+          <canvas id="canvas" aria-label="Steam case preview"></canvas>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer>Hosted on GitHub Pages</footer>
+  <script src="app.js"></script>
+</body>
+</html>

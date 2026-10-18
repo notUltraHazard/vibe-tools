@@ -71,7 +71,7 @@
 
   search.addEventListener('input', render);
 
-  fetch('tools.json')
+  fetch('tools.json', { cache: 'no-cache' })
     .then((r) => r.json())
     .then((data) => { tools = data; renderTags(); render(); })
     .catch(() => { empty.hidden = false; empty.textContent = 'Could not load tools.json. If you opened index.html as a file, run a local server instead (see README).'; });
