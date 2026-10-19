@@ -11,7 +11,7 @@
   const tpl = new Image();
   let tplReady = false;
   let cover = null;          // normalized 600x900 canvas
-  let fileName = 'steam-case';
+  let nameTouched = false;   // true once the user edits the file name themselves
 
   function status(msg, isError) {
     const s = $('status');
@@ -42,24 +42,8 @@
     return c;
   }
 
-  // Cover window path. Top corners stay square (the case header covers them); bottom corners round.
-  function windowPath(r) {
-    const x = CX, y = CY, w = CW, b = CY + CH;
-    ctx.beginPath();
-    ctx.moveTo(x, y);
-    ctx.lineTo(x + w, y);
-    ctx.lineTo(x + w, b - r);
-    ctx.arcTo(x + w, b, x + w - r, b, r);
-    ctx.lineTo(x + r, b);
-    ctx.arcTo(x, b, x, b - r, r);
-    ctx.closePath();
-  }
-
   function draw() {
     ctx.clearRect(0, 0, W, H);
-    ctx.save();
-    windowPath(+$('radius').value);
-    ctx.clip();
     if (cover) {
       ctx.drawImage(cover, CX, CY);
     } else {
@@ -73,16 +57,22 @@
       ctx.textAlign = 'center';
       ctx.fillText('Your cover goes here', CX + CW / 2, CY + CH / 2);
     }
-    ctx.restore();
     if (tplReady) ctx.drawImage(tpl, 0, 0);
     $('download').disabled = !cover;
   }
 
-  function setCover(im, name) {
+  function setCover(im) {
     cover = normalize(im);
-    fileName = name;
     draw();
   }
+
+  // ---- File name ----
+  function setName(name) { $('fname').value = name; }
+  function safeName() {
+    const n = $('fname').value.replace(/[\\/:*?"<>|\u0000-\u001f]/g, '').replace(/\s+/g, ' ').trim();
+    return n || 'steam-case';
+  }
+  $('fname').addEventListener('input', () => { nameTouched = true; });
 
   // ---- Steam ----
   function parseAppId(input) {
@@ -90,6 +80,29 @@
     const m = s.match(/(?:\/apps?\/|rungameid\/|appid=)(\d+)/i);
     if (m) return m[1];
     return /^\d+$/.test(s) ? s : null;
+  }
+
+  // store.steampowered.com/app/1245620/Elden_Ring/  ->  "Elden Ring"
+  function nameFromLink(input) {
+    const m = input.match(/\/app\/\d+\/([^\/?#]+)/i);
+    if (!m) return null;
+    try { return decodeURIComponent(m[1]).replace(/_/g, ' ').trim() || null; } catch (e) { return null; }
+  }
+
+  // Best effort: ask Steam's store API for the exact title (via a CORS proxy, since Steam blocks direct browser calls)
+  async function lookupName(id) {
+    const target = 'https://store.steampowered.com/api/appdetails?appids=' + id + '&filters=basic';
+    const ctrl = new AbortController();
+    const timer = setTimeout(() => ctrl.abort(), 6000);
+    try {
+      const res = await fetch('https://api.allorigins.win/raw?url=' + encodeURIComponent(target), { signal: ctrl.signal });
+      const data = (await res.json())[id];
+      return data && data.success && data.data && data.data.name ? data.data.name : null;
+    } catch (e) {
+      return null;
+    } finally {
+      clearTimeout(timer);
+    }
   }
 
   const HOSTS = [
@@ -110,7 +123,8 @@
   }
 
   async function onFetch() {
-    const id = parseAppId($('steam').value);
+    const input = $('steam').value;
+    const id = parseAppId(input);
     if (!id) {
       status('Paste a Steam store link (like store.steampowered.com/app/1245620) or an app ID.', true);
       return;
@@ -119,12 +133,21 @@
     btn.disabled = true;
     status('Fetching cover…');
     try {
-      setCover(await fetchSteamCover(id), 'steam-case-' + id);
-      status('Cover loaded.');
+      setCover(await fetchSteamCover(id));
     } catch (e) {
       status('Could not find cover art for app ' + id + '. Some games use a different file name, so download the 600 × 900 art from steamgriddb.com and upload it instead.', true);
+      btn.disabled = false;
+      return;
     }
     btn.disabled = false;
+
+    // Name the file after the game: the link's title first, then try for the exact title from Steam
+    nameTouched = false;
+    const fromLink = nameFromLink(input);
+    setName(fromLink || 'steam-case-' + id);
+    status('Cover loaded.');
+    const exact = await lookupName(id);
+    if (exact && !nameTouched) setName(exact);
   }
 
   $('fetch').addEventListener('click', onFetch);
@@ -138,7 +161,7 @@
     if (!f) return;
     const url = URL.createObjectURL(f);
     try {
-      setCover(await loadImage(url), 'steam-case');
+      setCover(await loadImage(url));
       status('Image loaded.');
     } catch (err) {
       status('That file could not be read as an image.', true);
@@ -146,26 +169,63 @@
     URL.revokeObjectURL(url);
   });
 
-  // ---- Controls ----
-  $('radius').addEventListener('input', draw);
-
   $('reset').addEventListener('click', () => {
     cover = null;
+    nameTouched = false;
     $('steam').value = '';
-    $('radius').value = 8;
+    setName('');
     status('');
     draw();
   });
 
-  $('download').addEventListener('click', () => {
+  // ---- Download ----
+  function canvasToBlob() {
+    return new Promise((resolve, reject) => canvas.toBlob((b) => (b ? resolve(b) : reject(new Error('no blob'))), 'image/png'));
+  }
+
+  function classicDownload(blob, fileName) {
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = fileName;
+    a.click();
+    setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+  }
+
+  $('download').addEventListener('click', async () => {
     if (!cover) return;
-    canvas.toBlob((blob) => {
-      const a = document.createElement('a');
-      a.href = URL.createObjectURL(blob);
-      a.download = fileName + '.png';
-      a.click();
-      setTimeout(() => URL.revokeObjectURL(a.href), 1000);
-    }, 'image/png');
+    const fileName = safeName() + '.png';
+
+    // Chrome / Edge: let the user pick where to save
+    if (window.showSaveFilePicker) {
+      let handle;
+      try {
+        handle = await window.showSaveFilePicker({
+          suggestedName: fileName,
+          types: [{ description: 'PNG image', accept: { 'image/png': ['.png'] } }],
+        });
+      } catch (e) {
+        if (e && e.name === 'AbortError') return;   // user closed the dialog
+        handle = null;                               // picker unavailable, use the normal download
+      }
+      if (handle) {
+        try {
+          const writable = await handle.createWritable();
+          await writable.write(await canvasToBlob());
+          await writable.close();
+          status('Saved ' + handle.name);
+          return;
+        } catch (e) {
+          status('Could not save to that location. Downloading normally instead.', true);
+        }
+      }
+    }
+
+    // Firefox / Safari: normal download (the browser decides where it goes)
+    try {
+      classicDownload(await canvasToBlob(), fileName);
+    } catch (e) {
+      status('Download failed. Try again.', true);
+    }
   });
 
   tpl.onload = () => { tplReady = true; draw(); };
