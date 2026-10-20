@@ -1,0 +1,134 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Comment Generator · Toolbox</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,600;12..96,800&family=Inter:wght@400;500;600;700&family=Roboto:wght@400;500;700&family=Figtree:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../../assets/style.css">
+  <link rel="stylesheet" href="style.css">
+  <script>try { var t = localStorage.getItem('theme'); if (t) document.documentElement.dataset.theme = t; } catch (e) {}</script>
+</head>
+<body>
+  <header class="top">
+    <a class="brand" href="../../">Toolbox</a>
+    <a href="../../" class="tag">All tools</a>
+  </header>
+
+  <main>
+    <section class="hero" style="padding-bottom:1.5rem">
+      <h1 style="font-size:clamp(2rem,6vw,3.5rem)">Comment generator</h1>
+      <p class="lede" style="margin-bottom:0">Make Instagram, YouTube and TikTok comments and download them as PNGs.</p>
+    </section>
+
+    <section class="tool">
+      <form class="panel form" onsubmit="return false">
+        <div class="seg" id="platforms" role="group" aria-label="Platform">
+          <button type="button" data-p="instagram" aria-pressed="true">Instagram</button>
+          <button type="button" data-p="youtube" aria-pressed="false">YouTube</button>
+          <button type="button" data-p="tiktok" aria-pressed="false">TikTok</button>
+        </div>
+
+        <div class="field">
+          <span class="label">Picture</span>
+          <div class="pic-row">
+            <img id="pic-thumb" class="pic-thumb" alt="Current profile picture">
+            <button type="button" class="btn small" id="upload">Upload</button>
+            <span class="or">or</span>
+            <button type="button" class="btn small" id="randomize">Randomize</button>
+            <input type="file" id="file" accept="image/*" hidden>
+          </div>
+          <p class="hint" id="pic-status"></p>
+        </div>
+
+        <div class="field">
+          <label class="label" for="username">Username</label>
+          <input id="username" type="text" maxlength="30" autocomplete="off" spellcheck="false">
+          <p class="hint"><span id="count">0</span> / 30 characters</p>
+        </div>
+
+        <div class="field">
+          <label class="label" for="comment">Comment</label>
+          <textarea id="comment" rows="3" maxlength="300"></textarea>
+        </div>
+
+        <div class="field" data-for="instagram">
+          <label class="label" for="replyto">Replying to</label>
+          <input id="replyto" type="text" maxlength="30" autocomplete="off" spellcheck="false" placeholder="Optional">
+        </div>
+
+        <div class="field" data-for="youtube">
+          <label class="label" for="channel">Channel name</label>
+          <input id="channel" type="text" maxlength="30" autocomplete="off" spellcheck="false" placeholder="Used for “Pinned by …”">
+        </div>
+
+        <div class="two" data-for="youtube tiktok">
+          <div class="field">
+            <label class="label" for="time">Time</label>
+            <input id="time" type="text" maxlength="20" autocomplete="off">
+          </div>
+          <div class="field">
+            <label class="label" for="likes">Likes</label>
+            <input id="likes" type="text" maxlength="10" autocomplete="off">
+          </div>
+        </div>
+
+        <div class="two">
+          <div class="field">
+            <label class="label" for="badge">Badge</label>
+            <select id="badge"></select>
+          </div>
+          <div class="field">
+            <label class="label" for="theme">Color</label>
+            <select id="theme"></select>
+          </div>
+        </div>
+
+        <div class="two">
+          <div class="field">
+            <label class="label" for="lang">Language</label>
+            <select id="lang">
+              <option value="en">English</option>
+              <option value="es">Español</option>
+              <option value="fr">Français</option>
+              <option value="de">Deutsch</option>
+              <option value="pt">Português</option>
+              <option value="it">Italiano</option>
+            </select>
+          </div>
+          <div class="field">
+            <label class="label" for="font">Font</label>
+            <select id="font">
+              <option value="default">Platform default</option>
+              <option value="inter">Inter</option>
+              <option value="roboto">Roboto</option>
+              <option value="figtree">Figtree</option>
+              <option value="system">Your system font</option>
+            </select>
+          </div>
+        </div>
+
+        <label class="check" data-for="youtube tiktok"><input type="checkbox" id="hearted"> Liked by creator</label>
+        <label class="check"><input type="checkbox" id="shadow"> Add a drop shadow to the PNG</label>
+      </form>
+
+      <div class="panel preview">
+        <div class="actions">
+          <button type="button" class="btn" id="reset">Reset</button>
+          <button type="button" class="btn" id="copy">Copy</button>
+          <button type="button" class="btn primary" id="download">Download</button>
+        </div>
+        <div class="stage-wrap">
+          <canvas id="canvas" aria-label="Comment preview"></canvas>
+        </div>
+        <p class="hint" id="size"></p>
+      </div>
+    </section>
+  </main>
+
+  <footer>Hosted on GitHub Pages</footer>
+  <script src="app.js"></script>
+</body>
+</html>

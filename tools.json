@@ -1,23 +1,35 @@
 [
   {
-    "name": "Instagram Comment Generator",
-    "description": "Make a custom Instagram comment card and download it as a transparent PNG.",
+    "name": "Comment Generator",
+    "description": "Make Instagram, YouTube and TikTok comments and download them as PNGs.",
     "icon": "💬",
-    "tags": ["instagram", "generator"],
-    "path": "tools/instagram-comment/"
+    "tags": [
+      "comments",
+      "instagram",
+      "youtube",
+      "tiktok",
+      "generator"
+    ],
+    "path": "tools/comment-generator/"
   },
   {
     "name": "Steam Case Generator",
     "description": "Put a game cover into a Steam case. Paste a Steam link or upload your own art.",
     "icon": "🎮",
-    "tags": ["steam", "generator"],
+    "tags": [
+      "steam",
+      "generator"
+    ],
     "path": "tools/steam-case/"
   },
   {
     "name": "Thumbnail Viewer",
     "description": "See your thumbnail and title in a YouTube grid beside the top videos in your niche.",
     "icon": "🖼️",
-    "tags": ["youtube", "viewer"],
+    "tags": [
+      "youtube",
+      "viewer"
+    ],
     "path": "tools/thumbnail-viewer/"
   }
 ]
