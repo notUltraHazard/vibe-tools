@@ -12,5 +12,12 @@
     "icon": "🎮",
     "tags": ["steam", "generator"],
     "path": "tools/steam-case/"
+  },
+  {
+    "name": "Thumbnail Viewer",
+    "description": "See your thumbnail and title in a YouTube grid beside the top videos in your niche.",
+    "icon": "🖼️",
+    "tags": ["youtube", "viewer"],
+    "path": "tools/thumbnail-viewer/"
   }
 ]
