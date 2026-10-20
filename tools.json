@@ -31,5 +31,15 @@
       "viewer"
     ],
     "path": "tools/thumbnail-viewer/"
+  },
+  {
+    "name": "Steam Review Generator",
+    "description": "Build a Steam store review (recommended or not, hours, awards, formatting) and download it as a PNG.",
+    "icon": "⭐",
+    "tags": [
+      "steam",
+      "generator"
+    ],
+    "path": "tools/steam-review/"
   }
 ]
