@@ -14,7 +14,7 @@
   },
   {
     "name": "Steam Case Generator",
-    "description": "Put a game cover into a Steam case. Paste a Steam link or upload your own art.",
+    "description": "Put game covers in a Steam case. Search by name, or make a whole list at once.",
     "icon": "🎮",
     "tags": [
       "steam",

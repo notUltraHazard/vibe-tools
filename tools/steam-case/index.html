@@ -20,47 +20,129 @@
   <main>
     <section class="hero" style="padding-bottom:1.5rem">
       <h1 style="font-size:clamp(2rem,6vw,3.5rem)">Steam case generator</h1>
-      <p class="lede" style="margin-bottom:0">Put a game cover inside a Steam case and download it as a PNG.</p>
+      <p class="lede" style="margin-bottom:0">Put game covers inside a Steam case. One at a time, or a whole list at once.</p>
     </section>
 
     <section class="tool">
       <form class="panel form" onsubmit="return false">
-        <div class="field">
-          <label class="label" for="steam">Steam link or app ID</label>
-          <div class="row">
-            <input id="steam" type="text" autocomplete="off" spellcheck="false" placeholder="store.steampowered.com/app/1245620">
-            <button type="button" class="btn primary" id="fetch">Fetch cover</button>
-          </div>
-          <p class="hint">Pulls the game's 600 × 900 library art from Steam.</p>
+        <div class="seg" id="mode" role="group" aria-label="Mode">
+          <button type="button" data-m="single" aria-pressed="true">Single</button>
+          <button type="button" data-m="bulk" aria-pressed="false">Bulk</button>
         </div>
 
-        <p class="divider"><span>or</span></p>
-
-        <div class="field">
-          <span class="label">Your own image</span>
-          <div class="row">
-            <button type="button" class="btn" id="upload">Upload image</button>
-            <input type="file" id="file" accept="image/*" hidden>
+        <div id="single" class="stack">
+          <div class="field">
+            <label class="label" for="steam">Game name, Steam link or app ID</label>
+            <div class="row">
+              <input id="steam" type="text" autocomplete="off" spellcheck="false" placeholder="Search, e.g. Elden Ring">
+              <button type="button" class="btn primary" id="go">Find cover</button>
+            </div>
+            <ul id="results" class="results" hidden></ul>
+            <p class="hint" id="find-hint"></p>
           </div>
-          <p class="hint">Best at 600 × 900 px. Other sizes are cropped to fit.</p>
+
+          <p class="divider"><span>or</span></p>
+
+          <div class="field">
+            <span class="label">Your own image</span>
+            <div class="row">
+              <button type="button" class="btn" id="upload">Upload image</button>
+              <input type="file" id="file" accept="image/*" hidden>
+            </div>
+            <p class="hint">Best at 600 × 900 px. Other sizes are cropped to fit.</p>
+          </div>
+
+          <div class="field">
+            <label class="label" for="fname">File name</label>
+            <input id="fname" type="text" autocomplete="off" spellcheck="false" placeholder="steam-case">
+            <p class="hint">Filled in from the game's name. Edit it any time; .png is added for you.</p>
+          </div>
         </div>
 
-        <div class="field">
-          <label class="label" for="fname">File name</label>
-          <input id="fname" type="text" autocomplete="off" spellcheck="false" placeholder="steam-case">
-          <p class="hint">Filled in from the game's name when you use a Steam link. Edit it any time; .png is added for you.</p>
+        <div id="bulk" class="stack" hidden>
+          <div class="field">
+            <label class="label" for="bulkText">Games, one per line</label>
+            <textarea id="bulkText" rows="10" spellcheck="false" placeholder="Elden Ring&#10;Hades&#10;https://store.steampowered.com/app/1091500/&#10;413150"></textarea>
+            <p class="hint">Names, Steam links or app IDs. Each one becomes its own case.</p>
+          </div>
+          <div class="row">
+            <button type="button" class="btn primary" id="bulkGo">Generate all</button>
+            <button type="button" class="btn" id="bulkRetry" hidden>Retry failed</button>
+            <button type="button" class="btn" id="bulkClear">Clear</button>
+          </div>
+          <div class="progress" id="progress" hidden><div id="bar"></div></div>
         </div>
 
         <p id="status" class="status" role="status" aria-live="polite"></p>
+
+        <details class="settings">
+          <summary>Cover sources and settings</summary>
+          <p class="hint">Covers come from Steam first. If Steam doesn't have one, the tool tries SteamGridDB.</p>
+          <div class="field">
+            <label class="label" for="sgdbkey">SteamGridDB API key</label>
+            <input id="sgdbkey" type="password" autocomplete="off" spellcheck="false" placeholder="Optional but recommended">
+            <p class="hint">Free. On <a href="https://www.steamgriddb.com/profile/preferences/api" target="_blank" rel="noopener">steamgriddb.com</a>, sign in, open Preferences, then API.</p>
+          </div>
+          <div class="field">
+            <label class="label" for="proxy">Your proxy URL</label>
+            <input id="proxy" type="text" autocomplete="off" spellcheck="false" placeholder="https://your-worker.workers.dev">
+            <p class="hint">Optional. Search and fallbacks go through free public proxies by default, which can be flaky. Your own free Cloudflare Worker is much more reliable.</p>
+          </div>
+          <button type="button" class="btn small" id="saveSettings">Save settings</button>
+          <details class="worker">
+            <summary>How to set up your own proxy (2 minutes)</summary>
+            <ol>
+              <li>Sign in at <a href="https://dash.cloudflare.com/" target="_blank" rel="noopener">dash.cloudflare.com</a> and open <b>Workers &amp; Pages</b>.</li>
+              <li>Create a Worker (the Hello World template), click <b>Edit code</b>, and replace everything with the code below.</li>
+              <li>Deploy, then paste the <code>…workers.dev</code> address above and save.</li>
+            </ol>
+<pre>const ALLOWED = [
+  'https://store.steampowered.com/', 'https://api.steampowered.com/',
+  'https://www.steamgriddb.com/', 'https://cdn2.steamgriddb.com/',
+  'https://shared.fastly.steamstatic.com/', 'https://shared.akamai.steamstatic.com/',
+  'https://cdn.cloudflare.steamstatic.com/', 'https://cdn.akamai.steamstatic.com/',
+];
+const CORS = {
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Headers': 'Authorization, Content-Type',
+  'Access-Control-Allow-Methods': 'GET, OPTIONS',
+};
+export default {
+  async fetch(request) {
+    if (request.method === 'OPTIONS') return new Response(null, { headers: CORS });
+    const target = new URL(request.url).searchParams.get('url');
+    if (!target || !ALLOWED.some((p) => target.startsWith(p))) {
+      return new Response('Not allowed', { status: 400, headers: CORS });
+    }
+    const headers = {};
+    const auth = request.headers.get('Authorization');
+    if (auth) headers.Authorization = auth;
+    const res = await fetch(target, { headers });
+    return new Response(res.body, {
+      status: res.status,
+      headers: { ...CORS, 'Content-Type': res.headers.get('Content-Type') || 'application/json' },
+    });
+  },
+};</pre>
+          </details>
+        </details>
       </form>
 
       <div class="panel preview">
-        <div class="actions">
-          <button type="button" class="btn" id="reset">Reset</button>
-          <button type="button" class="btn primary" id="download" disabled>Download</button>
+        <div id="singlePrev">
+          <div class="actions">
+            <button type="button" class="btn" id="reset">Reset</button>
+            <button type="button" class="btn primary" id="download" disabled>Download</button>
+          </div>
+          <div class="stage-wrap"><canvas id="canvas" aria-label="Steam case preview"></canvas></div>
         </div>
-        <div class="stage-wrap">
-          <canvas id="canvas" aria-label="Steam case preview"></canvas>
+        <div id="bulkPrev" hidden>
+          <div class="actions">
+            <button type="button" class="btn" id="folder" hidden>Save to folder…</button>
+            <button type="button" class="btn primary" id="zip" disabled>Download ZIP</button>
+          </div>
+          <p class="hint" id="bulkInfo">Add some games and press Generate all.</p>
+          <div id="bgrid" class="bgrid"></div>
         </div>
       </div>
     </section>
