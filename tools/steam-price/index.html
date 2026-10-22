@@ -1,0 +1,152 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Steam Price Generator · Toolbox</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,600;12..96,800&family=Mulish:wght@400;600;700;800&family=Nunito+Sans:wght@400;600;700;800&family=Figtree:wght@400;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../../assets/style.css">
+  <link rel="stylesheet" href="style.css">
+  <script>try { var t = localStorage.getItem('theme'); if (t) document.documentElement.dataset.theme = t; } catch (e) {}</script>
+</head>
+<body>
+  <header class="top">
+    <a class="brand" href="../../">Toolbox</a>
+    <a href="../../" class="tag">All tools</a>
+  </header>
+
+  <main>
+    <section class="hero" style="padding-bottom:1.5rem">
+      <h1 style="font-size:clamp(2rem,6vw,3.5rem)">Steam price generator</h1>
+      <p class="lede" style="margin-bottom:0">Make a Steam discount tag. Pull the price from Steam, or type it in.</p>
+    </section>
+
+    <section class="tool">
+      <form class="panel form" onsubmit="return false">
+        <div class="field">
+          <label class="label" for="steam">Game name, Steam link or app ID</label>
+          <div class="row">
+            <input id="steam" type="text" autocomplete="off" spellcheck="false" placeholder="Search, e.g. Elden Ring">
+            <button type="button" class="btn primary" id="go">Get price</button>
+          </div>
+          <ul id="results" class="results" hidden></ul>
+          <p class="hint" id="find-hint"></p>
+        </div>
+
+        <div class="field">
+          <label class="label" for="cc">Store region</label>
+          <select id="cc">
+            <option value="ca" selected>Canada (CDN$)</option>
+            <option value="us">United States ($)</option>
+            <option value="gb">United Kingdom (£)</option>
+            <option value="de">Eurozone (€)</option>
+            <option value="au">Australia (A$)</option>
+            <option value="nz">New Zealand (NZ$)</option>
+            <option value="jp">Japan (¥)</option>
+            <option value="br">Brazil (R$)</option>
+            <option value="mx">Mexico (Mex$)</option>
+            <option value="pl">Poland (zł)</option>
+          </select>
+        </div>
+
+        <p class="divider"><span>Prices (edit any time)</span></p>
+
+        <div class="field">
+          <label class="label" for="fmt">Currency format</label>
+          <select id="fmt">
+            <option value="CDN$ {p}" selected>CDN$ 1.00</option>
+            <option value="${p}">$1.00</option>
+            <option value="£{p}">£1.00</option>
+            <option value="{p}€">1,00€</option>
+            <option value="A$ {p}">A$ 1.00</option>
+            <option value="NZ$ {p}">NZ$ 1.00</option>
+            <option value="¥ {p}">¥ 100</option>
+            <option value="R$ {p}">R$ 1,00</option>
+            <option value="Mex$ {p}">Mex$ 1.00</option>
+            <option value="{p}zł">1,00zł</option>
+            <option value="{p}">Exactly as typed</option>
+          </select>
+          <p class="hint">Applied when you type just a number, like 79.99.</p>
+        </div>
+
+        <div class="two">
+          <div class="field">
+            <label class="label" for="orig">Original price</label>
+            <input id="orig" type="text" maxlength="20" value="79.99" autocomplete="off">
+          </div>
+          <div class="field">
+            <label class="label" for="final">Sale price</label>
+            <input id="final" type="text" maxlength="20" value="6.39" autocomplete="off">
+          </div>
+        </div>
+
+        <div class="field">
+          <label class="label" for="pct">Discount %</label>
+          <div class="row">
+            <input id="pct" type="text" maxlength="3" inputmode="numeric" autocomplete="off">
+            <label class="check"><input type="checkbox" id="auto" checked> Calculate</label>
+          </div>
+        </div>
+
+        <div class="checks">
+          <label class="check"><input type="checkbox" id="showpct" checked> Show discount block</label>
+          <label class="check"><input type="checkbox" id="showorig" checked> Show original price</label>
+        </div>
+
+        <div class="two">
+          <div class="field">
+            <label class="label" for="font">Font</label>
+            <select id="font">
+              <option value="mulish">Mulish (closest)</option>
+              <option value="nunito">Nunito Sans</option>
+              <option value="figtree">Figtree</option>
+              <option value="arial">Arial</option>
+            </select>
+          </div>
+          <div class="field">
+            <label class="label" for="scale">Image quality</label>
+            <select id="scale">
+              <option value="1">Normal (1x)</option>
+              <option value="2" selected>High (2x)</option>
+              <option value="3">Ultra (3x)</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="field">
+          <label class="label" for="fname">File name</label>
+          <input id="fname" type="text" autocomplete="off" spellcheck="false" placeholder="steam-price">
+          <p class="hint">Filled in from the game's name. .png is added for you.</p>
+        </div>
+
+        <p id="status" class="status" role="status" aria-live="polite"></p>
+
+        <details class="settings">
+          <summary>Proxy settings</summary>
+          <p class="hint">Steam blocks direct browser requests, so searches and prices go through free public proxies. If they fail, use your own Cloudflare Worker proxy. The setup steps are in the Steam Case tool's settings, and the address is shared between both tools.</p>
+          <div class="field">
+            <label class="label" for="proxy">Your proxy URL</label>
+            <input id="proxy" type="text" autocomplete="off" spellcheck="false" placeholder="https://your-worker.workers.dev">
+          </div>
+          <button type="button" class="btn small" id="saveProxy">Save</button>
+        </details>
+      </form>
+
+      <div class="panel preview">
+        <div class="actions">
+          <button type="button" class="btn" id="reset">Reset</button>
+          <button type="button" class="btn" id="copy">Copy</button>
+          <button type="button" class="btn primary" id="download">Download</button>
+        </div>
+        <div class="stage-wrap"><canvas id="canvas" aria-label="Steam price preview"></canvas></div>
+        <p class="hint" id="size"></p>
+      </div>
+    </section>
+  </main>
+
+  <footer>Hosted on GitHub Pages</footer>
+  <script src="app.js"></script>
+</body>
+</html>

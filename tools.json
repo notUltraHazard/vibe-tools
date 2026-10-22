@@ -41,5 +41,15 @@
       "generator"
     ],
     "path": "tools/steam-review/"
+  },
+  {
+    "name": "Steam Price Generator",
+    "description": "Make a Steam discount tag with the percent and prices. Pull it from Steam or type it in.",
+    "icon": "🏷️",
+    "tags": [
+      "steam",
+      "generator"
+    ],
+    "path": "tools/steam-price/"
   }
 ]
