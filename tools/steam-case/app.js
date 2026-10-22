@@ -55,23 +55,55 @@
     throw last;
   }
 
-  async function fetchJSON(url, headers) {
-    const tries = [url];
+  function sourcesFor(url, headers) {
+    const s = [];
     const w = getProxy();
-    if (w) tries.unshift(proxied(w, url));
-    tries.push('https://corsproxy.io/?url=' + enc(url));
-    tries.push('https://api.allorigins.win/raw?url=' + enc(url));
-    let last;
-    for (const u of tries) {
+    if (w) s.push(['your proxy', proxied(w, url)]);
+    s.push(['direct', url]);
+    s.push(['corsproxy.io', 'https://corsproxy.io/?url=' + enc(url)]);
+    if (!headers) {
+      s.push(['codetabs', 'https://api.codetabs.com/v1/proxy/?quest=' + enc(url)]);
+      s.push(['allorigins', 'https://api.allorigins.win/raw?url=' + enc(url)]);
+      s.push(['jina', 'https://r.jina.ai/' + url]);
+    }
+    return s;
+  }
+  function looseJSON(txt) {
+    try { return JSON.parse(txt); } catch (e) {}
+    const a = txt.search(/[\[{]/), b = Math.max(txt.lastIndexOf('}'), txt.lastIndexOf(']'));
+    if (a >= 0 && b > a) return JSON.parse(txt.slice(a, b + 1));
+    throw new Error('not JSON');
+  }
+  const short = (e) => (e.name === 'AbortError' ? 'timed out' : e.message === 'Failed to fetch' ? 'blocked or offline' : e.message);
+  const why = (e) => (e && e.details && e.details.length ? ' (' + e.details.join('; ') + ')' : '');
+
+  // Tries direct, your proxy and several public proxies, and uses whichever answers first
+  async function fetchJSON(url, headers) {
+    const sources = sourcesFor(url, headers);
+    const errors = [], ctrls = [];
+    let done = false;
+    const attempt = async ([name, u], i) => {
+      if (i) await new Promise((r) => setTimeout(r, i * 400));
+      if (done) throw new Error('skipped');
       const ctrl = new AbortController();
-      const t = setTimeout(() => ctrl.abort(), 8000);
+      ctrls.push(ctrl);
+      const t = setTimeout(() => ctrl.abort(), 9000);
       try {
         const r = await fetch(u, { headers, signal: ctrl.signal });
-        if (!r.ok) { last = new Error('HTTP ' + r.status); continue; }
-        return await r.json();
-      } catch (e) { last = e; } finally { clearTimeout(t); }
+        if (!r.ok) throw new Error('HTTP ' + r.status);
+        return looseJSON(await r.text());
+      } catch (e) { if (!done) errors.push(name + ': ' + short(e)); throw e; } finally { clearTimeout(t); }
+    };
+    try {
+      const res = await Promise.any(sources.map(attempt));
+      done = true;
+      ctrls.forEach((c) => c.abort());
+      return res;
+    } catch (e) {
+      const err = new Error('request failed');
+      err.details = errors;
+      throw err;
     }
-    throw last || new Error('request failed');
   }
 
   // ---------- Steam / SteamGridDB ----------
@@ -317,7 +349,7 @@
     } catch (e) {
       if (my !== searchSeq) return;
       hideResults();
-      hint('Search is unavailable right now. Paste a Steam link or app ID instead, or set up a proxy in settings.');
+      hint('Search failed' + why(e) + '. Paste a Steam link or app ID instead, or set up a proxy in settings.');
     }
   }
 

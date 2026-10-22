@@ -44,7 +44,7 @@
   },
   {
     "name": "Steam Price Generator",
-    "description": "Make a Steam discount tag with the percent and prices. Pull it from Steam or type it in.",
+    "description": "Make Steam discount tags. Pull prices from Steam or type them in, one at a time or in bulk.",
     "icon": "🏷️",
     "tags": [
       "steam",

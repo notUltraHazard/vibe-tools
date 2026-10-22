@@ -20,19 +20,37 @@
   <main>
     <section class="hero" style="padding-bottom:1.5rem">
       <h1 style="font-size:clamp(2rem,6vw,3.5rem)">Steam price generator</h1>
-      <p class="lede" style="margin-bottom:0">Make a Steam discount tag. Pull the price from Steam, or type it in.</p>
+      <p class="lede" style="margin-bottom:0">Make Steam discount tags. Pull prices from Steam, or type them in. One at a time or in bulk.</p>
     </section>
 
     <section class="tool">
       <form class="panel form" onsubmit="return false">
-        <div class="field">
+        <div class="seg" id="mode" role="group" aria-label="Mode">
+          <button type="button" data-m="single" aria-pressed="true">Single</button>
+          <button type="button" data-m="bulk" aria-pressed="false">Bulk</button>
+        </div>
+
+        <div id="singleSearch" class="field">
           <label class="label" for="steam">Game name, Steam link or app ID</label>
           <div class="row">
-            <input id="steam" type="text" autocomplete="off" spellcheck="false" placeholder="Search, e.g. Elden Ring">
+            <input id="steam" type="text" autocomplete="off" spellcheck="false" placeholder="Search, or paste a store link">
             <button type="button" class="btn primary" id="go">Get price</button>
           </div>
           <ul id="results" class="results" hidden></ul>
           <p class="hint" id="find-hint"></p>
+        </div>
+
+        <div id="bulkInput" class="stack" hidden>
+          <div class="field">
+            <label class="label" for="bulkText">Games, one per line</label>
+            <textarea id="bulkText" rows="9" spellcheck="false" placeholder="Elden Ring&#10;https://store.steampowered.com/app/1091500/&#10;413150&#10;Some Other Game | 79.99 | 6.39"></textarea>
+            <p class="hint">Names, Steam links or app IDs. For a manual one, write <code>Name | original | sale</code>.</p>
+          </div>
+          <div class="row">
+            <button type="button" class="btn primary" id="bulkGo">Get all prices</button>
+            <button type="button" class="btn" id="bulkClear">Clear</button>
+          </div>
+          <div class="progress" id="progress" hidden><div id="bar"></div></div>
         </div>
 
         <div class="field">
@@ -50,8 +68,6 @@
             <option value="pl">Poland (zł)</option>
           </select>
         </div>
-
-        <p class="divider"><span>Prices (edit any time)</span></p>
 
         <div class="field">
           <label class="label" for="fmt">Currency format</label>
@@ -71,22 +87,24 @@
           <p class="hint">Applied when you type just a number, like 79.99.</p>
         </div>
 
-        <div class="two">
-          <div class="field">
-            <label class="label" for="orig">Original price</label>
-            <input id="orig" type="text" maxlength="20" value="79.99" autocomplete="off">
+        <div id="singlePrices" class="stack">
+          <p class="divider"><span>Prices (edit any time)</span></p>
+          <div class="two">
+            <div class="field">
+              <label class="label" for="orig">Original price</label>
+              <input id="orig" type="text" maxlength="20" value="79.99" autocomplete="off">
+            </div>
+            <div class="field">
+              <label class="label" for="final">Sale price</label>
+              <input id="final" type="text" maxlength="20" value="6.39" autocomplete="off">
+            </div>
           </div>
           <div class="field">
-            <label class="label" for="final">Sale price</label>
-            <input id="final" type="text" maxlength="20" value="6.39" autocomplete="off">
-          </div>
-        </div>
-
-        <div class="field">
-          <label class="label" for="pct">Discount %</label>
-          <div class="row">
-            <input id="pct" type="text" maxlength="3" inputmode="numeric" autocomplete="off">
-            <label class="check"><input type="checkbox" id="auto" checked> Calculate</label>
+            <label class="label" for="pct">Discount %</label>
+            <div class="row">
+              <input id="pct" type="text" maxlength="3" inputmode="numeric" autocomplete="off">
+              <label class="check"><input type="checkbox" id="auto" checked> Calculate</label>
+            </div>
           </div>
         </div>
 
@@ -115,7 +133,7 @@
           </div>
         </div>
 
-        <div class="field">
+        <div id="singleName" class="field">
           <label class="label" for="fname">File name</label>
           <input id="fname" type="text" autocomplete="off" spellcheck="false" placeholder="steam-price">
           <p class="hint">Filled in from the game's name. .png is added for you.</p>
@@ -124,24 +142,74 @@
         <p id="status" class="status" role="status" aria-live="polite"></p>
 
         <details class="settings">
-          <summary>Proxy settings</summary>
-          <p class="hint">Steam blocks direct browser requests, so searches and prices go through free public proxies. If they fail, use your own Cloudflare Worker proxy. The setup steps are in the Steam Case tool's settings, and the address is shared between both tools.</p>
+          <summary>Connection and proxy settings</summary>
+          <p class="hint">Steam blocks direct requests from web pages, so lookups go through free public proxies, which are sometimes down. If Get price fails, press Test to see which ones work. For a fix that doesn't depend on them, set up your own free Cloudflare Worker below.</p>
+          <div class="row">
+            <button type="button" class="btn small" id="test">Test connection</button>
+          </div>
+          <pre id="testout" class="testout" hidden></pre>
           <div class="field">
             <label class="label" for="proxy">Your proxy URL</label>
             <input id="proxy" type="text" autocomplete="off" spellcheck="false" placeholder="https://your-worker.workers.dev">
           </div>
           <button type="button" class="btn small" id="saveProxy">Save</button>
+          <details class="worker">
+            <summary>How to set up your own proxy (2 minutes)</summary>
+            <ol>
+              <li>Sign in at <a href="https://dash.cloudflare.com/" target="_blank" rel="noopener">dash.cloudflare.com</a> and open <b>Workers &amp; Pages</b>.</li>
+              <li>Create a Worker (the Hello World template), click <b>Edit code</b>, and replace everything with the code below.</li>
+              <li>Deploy, then paste the <code>…workers.dev</code> address above and save. The Steam Case tool uses it too.</li>
+            </ol>
+<pre>const ALLOWED = [
+  'https://store.steampowered.com/', 'https://api.steampowered.com/',
+  'https://www.steamgriddb.com/', 'https://cdn2.steamgriddb.com/',
+  'https://shared.fastly.steamstatic.com/', 'https://shared.akamai.steamstatic.com/',
+  'https://cdn.cloudflare.steamstatic.com/', 'https://cdn.akamai.steamstatic.com/',
+];
+const CORS = {
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Headers': 'Authorization, Content-Type',
+  'Access-Control-Allow-Methods': 'GET, OPTIONS',
+};
+export default {
+  async fetch(request) {
+    if (request.method === 'OPTIONS') return new Response(null, { headers: CORS });
+    const target = new URL(request.url).searchParams.get('url');
+    if (!target || !ALLOWED.some((p) => target.startsWith(p))) {
+      return new Response('Not allowed', { status: 400, headers: CORS });
+    }
+    const headers = {};
+    const auth = request.headers.get('Authorization');
+    if (auth) headers.Authorization = auth;
+    const res = await fetch(target, { headers });
+    return new Response(res.body, {
+      status: res.status,
+      headers: { ...CORS, 'Content-Type': res.headers.get('Content-Type') || 'application/json' },
+    });
+  },
+};</pre>
+          </details>
         </details>
       </form>
 
       <div class="panel preview">
-        <div class="actions">
-          <button type="button" class="btn" id="reset">Reset</button>
-          <button type="button" class="btn" id="copy">Copy</button>
-          <button type="button" class="btn primary" id="download">Download</button>
+        <div id="singlePrev">
+          <div class="actions">
+            <button type="button" class="btn" id="reset">Reset</button>
+            <button type="button" class="btn" id="copy">Copy</button>
+            <button type="button" class="btn primary" id="download">Download</button>
+          </div>
+          <div class="stage-wrap"><canvas id="canvas" aria-label="Steam price preview"></canvas></div>
+          <p class="hint" id="size"></p>
         </div>
-        <div class="stage-wrap"><canvas id="canvas" aria-label="Steam price preview"></canvas></div>
-        <p class="hint" id="size"></p>
+        <div id="bulkPrev" hidden>
+          <div class="actions">
+            <button type="button" class="btn" id="folder" hidden>Save to folder…</button>
+            <button type="button" class="btn primary" id="zip" disabled>Download ZIP</button>
+          </div>
+          <p class="hint" id="bulkInfo">Add some games and press Get all prices.</p>
+          <div id="bgrid" class="bgrid"></div>
+        </div>
       </div>
     </section>
   </main>
