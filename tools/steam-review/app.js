@@ -216,9 +216,10 @@
   function draw(p) {
     const { T, fam, S } = p;
     const g = ctx;
-    const rx = p.user ? RX : 0;            // right column x (the review itself)
-    const boxW = p.user ? BOX_W : STRIP_W; // without the user column the box is just the review
-    const dy = p.user ? 0 : -6;            // and sits flush with the top
+    const inset = p.user ? 0 : 14;                 // breathing room around the review when the user column is hidden
+    const rx = p.user ? RX : inset;                // right column x (the review itself)
+    const boxW = p.user ? BOX_W : STRIP_W + inset * 2;
+    const dy = p.user ? 0 : inset - 6;             // move the review down so the top gap matches the sides
     const steam = p.bg === 'steam';
     const padX = steam ? PAD : 0, padT = steam ? PAD : 0, padB = steam ? PAD : 0;
     const showHead = p.header !== 'none';
@@ -257,7 +258,7 @@
     const awardTop = counts.length ? countFirst + 14 * (counts.length - 1) + 17 : (p.buttons ? btnBottom + 15 : rule + 12);
     let boxH;
     if (p.awards.length) boxH = awardTop + 29 + 9; else boxH = y + 9;
-    boxH = Math.ceil(Math.max(boxH + dy, p.user ? 100 : 60));
+    boxH = Math.ceil(Math.max(boxH + dy + (p.user ? 0 : 5), p.user ? 100 : 60));
 
     // the section header can be wider than the review when the user column is hidden
     let headW = 0;
