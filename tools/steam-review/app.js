@@ -9,7 +9,7 @@
     blockUp: '#1e455f', iconUp: '#66c0f4', blockDown: '#5e3035', iconDown: '#e8686b',
     title: '#f1f1f1', muted: '#556772', body: '#acb2b8', head: '#ffffff', rule: '#2e3a46',
     ask: '#5e6978', btn: '#212d3b', btnText: '#66c0f4', btnIcon: '#5c83a6', found: '#6c839b',
-    chip: '#101a25', blue: '#66c0f4', star: '#566878', label: '#8f98a0', refund: '#c0766f',
+    chip: '#101a25', blue: '#66c0f4', star: '#566878', label: '#8f98a0', red: '#d95050', badge: '#2a475e',
     hdrGray: '#5b7284',
   };
   const NAME = { default: '#8f98a0', online: '#57cbde', ingame: '#90ba3c', offline: '#898989' };
@@ -235,13 +235,13 @@
     const editedStr = p.edited ? (T.edited + p.edited).toUpperCase() : '';
     const editedOwnLine = !!(postedStr && editedStr && ctx.measureText(postedStr).width + 14 + ctx.measureText(editedStr).width > RW);
     const labels = [];
-    if (p.free) labels.push([T.free, C.label]);
-    if (p.early) labels.push([T.early, C.label]);
-    if (p.refunded) labels.push([T.refunded, C.refund]);
-    let lastLabel = 46;
+    if (p.free) labels.push({ t: T.free, color: C.red });
+    if (p.early) labels.push({ t: T.early.toUpperCase(), badge: true });
+    if (p.refunded) labels.push({ t: T.refunded, color: C.red });
+    let lastLabel = 46, prevBadge = false;
     if (hasPosted) lastLabel = editedOwnLine ? 85 : 70;
-    const labelBase = labels.map((_, i) => { lastLabel += hasPosted || i ? 17 : 24; return lastLabel; });
-    const firstBase = lastLabel + 24;
+    const labelBase = labels.map((l, i) => { lastLabel += (hasPosted || i ? 17 : 24) + (prevBadge ? 3 : 0); prevBadge = !!l.badge; return lastLabel; });
+    const firstBase = lastLabel + (prevBadge ? 27 : 24);
     let cursor = firstBase - 12.4;
     const rowTops = rows.map((r) => { const t = cursor; cursor += r.lh; return t; });
     const rule = cursor + 9;
@@ -333,8 +333,18 @@
         g.fillText(editedStr, ex, by + (editedOwnLine ? 85 : 70));
       }
     }
-    g.font = `400 12px ${fam}`;
-    labels.forEach(([t, col], i) => { g.fillStyle = col; g.fillText(t, bx + rx, by + labelBase[i]); });
+    labels.forEach((l, i) => {
+      const y = by + labelBase[i];
+      if (l.badge) {                              // Early Access: blue rectangle with light-blue text
+        g.font = `700 11px ${fam}`;
+        const sp = 0.6, tw = [...l.t].reduce((a, ch) => a + g.measureText(ch).width + sp, 0) - sp;
+        g.fillStyle = C.badge; g.fillRect(bx + rx, y - 13, Math.ceil(tw) + 14, 18);
+        g.fillStyle = C.blue; spaced(g, l.t, bx + rx + 7, y, sp);
+      } else {                                    // received for free / refunded: red text
+        g.font = `400 12px ${fam}`; g.fillStyle = l.color;
+        g.fillText(l.t, bx + rx, y);
+      }
+    });
 
     // review text
     rows.forEach((r, i) => drawRow(g, r, bx + rx, by + rowTops[i], fam));
