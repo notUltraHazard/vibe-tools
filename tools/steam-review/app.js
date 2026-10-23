@@ -196,7 +196,7 @@
       posted: $('posted').value.trim(), edited: $('edited').value.trim(),
       free: $('free').checked, early: $('early').checked, refunded: $('refunded').checked,
       text: $('text').value, helpful: num($('helpful').value), funny: num($('funny').value),
-      buttons: $('buttons').checked, header: $('header').value, bg: $('bg').value,
+      user: $('user').checked, buttons: $('buttons').checked, header: $('header').value, bg: $('bg').value,
       awards: [...document.querySelectorAll('.award')].map((r) => ({ e: r.querySelector('select').value, n: r.querySelector('input').value.trim() })).filter((a) => a.e),
     };
   }
@@ -216,6 +216,9 @@
   function draw(p) {
     const { T, fam, S } = p;
     const g = ctx;
+    const rx = p.user ? RX : 0;            // right column x (the review itself)
+    const boxW = p.user ? BOX_W : STRIP_W; // without the user column the box is just the review
+    const dy = p.user ? 0 : -6;            // and sits flush with the top
     const steam = p.bg === 'steam';
     const padX = steam ? PAD : 0, padT = steam ? PAD : 0, padB = steam ? PAD : 0;
     const showHead = p.header !== 'none';
@@ -254,9 +257,17 @@
     const awardTop = counts.length ? countFirst + 14 * (counts.length - 1) + 17 : (p.buttons ? btnBottom + 15 : rule + 12);
     let boxH;
     if (p.awards.length) boxH = awardTop + 29 + 9; else boxH = y + 9;
-    boxH = Math.ceil(Math.max(boxH, 100));
+    boxH = Math.ceil(Math.max(boxH + dy, p.user ? 100 : 60));
 
-    const W = padX * 2 + BOX_W, H = by + boxH + padB;
+    // the section header can be wider than the review when the user column is hidden
+    let headW = 0;
+    if (showHead) {
+      g.font = `600 14px ${fam}`;
+      const sw = (t) => [...t].reduce((a, ch) => a + g.measureText(ch).width + 2.2, 0);
+      headW = Math.ceil(sw(T.most.toUpperCase()) + 10 + sw((p.header === 'helpful' ? T.past : T.overall).toUpperCase()));
+    }
+    const lineW = Math.max(boxW, headW);
+    const W = padX * 2 + lineW, H = by + boxH + padB;
     canvas.width = W * S; canvas.height = H * S;
     canvas.style.width = W + 'px';
     g.setTransform(S, 0, 0, S, 0, 0);
@@ -273,18 +284,19 @@
       let hx = spaced(g, T.most.toUpperCase(), padX, base, 2.2);
       g.fillStyle = C.hdrGray;
       spaced(g, (p.header === 'helpful' ? T.past : T.overall).toUpperCase(), hx + 10, base, 2.2);
-      const grad = g.createLinearGradient(padX, 0, padX + BOX_W, 0);
+      const grad = g.createLinearGradient(padX, 0, padX + lineW, 0);
       grad.addColorStop(0, 'rgba(75,107,132,1)');
       grad.addColorStop(1, 'rgba(75,107,132,0)');
       g.fillStyle = grad;
-      g.fillRect(padX, padT + 27, BOX_W, 1);
+      g.fillRect(padX, padT + 27, lineW, 1);
     }
 
     // ---- review box ----
     g.fillStyle = C.box;
-    g.fillRect(bx, by, BOX_W, boxH);
+    g.fillRect(bx, by, boxW, boxH);
 
     // left column
+    if (p.user) {
     const ax = bx + 8, ay = by + 6;
     g.fillStyle = '#474d54'; g.fillRect(ax, ay, 36, 36);
     g.fillStyle = '#1c2227'; g.fillRect(ax + 1, ay + 1, 34, 34);
@@ -296,39 +308,44 @@
     if (p.products) { g.fillText(fmt(T.prod, { n: p.products }), bx + 51, ly, 150); ly += 15; }
     if (p.reviews) g.fillText(p.reviews === '1' ? T.rv1 : fmt(T.rvN, { n: p.reviews }), bx + 51, ly, 150);
 
+    }
+
+    // right column (the review), shifted up when the user column is hidden
+    g.save();
+    g.translate(0, dy);
     // recommendation strip
     const up = p.rec === 'yes';
-    g.fillStyle = C.strip; g.fillRect(bx + RX, by + 6, STRIP_W, 42);
-    g.fillStyle = up ? C.blockUp : C.blockDown; g.fillRect(bx + RX, by + 7, 40, 40);
-    icon(g, P.thumb, bx + RX + 7, by + 14, 26, up ? C.iconUp : C.iconDown, !up);
+    g.fillStyle = C.strip; g.fillRect(bx + rx, by + 6, STRIP_W, 42);
+    g.fillStyle = up ? C.blockUp : C.blockDown; g.fillRect(bx + rx, by + 7, 40, 40);
+    icon(g, P.thumb, bx + rx + 7, by + 14, 26, up ? C.iconUp : C.iconDown, !up);
     g.fillStyle = C.title; g.font = `500 16px ${fam}`;
-    g.fillText(up ? T.rec : T.notrec, bx + RX + 50, by + 23);
+    g.fillText(up ? T.rec : T.notrec, bx + rx + 50, by + 23);
     const hrs = p.hours ? fmt(T.hours, { h: p.hours }) + (p.at ? ' ' + fmt(T.at, { r: p.at }) : '') : '';
-    if (hrs) { g.fillStyle = C.muted; g.font = `400 12px ${fam}`; g.fillText(hrs, bx + RX + 50, by + 39); }
-    icon(g, P.star, bx + 586, by + 17, 20, C.star);
+    if (hrs) { g.fillStyle = C.muted; g.font = `400 12px ${fam}`; g.fillText(hrs, bx + rx + 50, by + 39); }
+    icon(g, P.star, bx + rx + 373, by + 17, 20, C.star);
 
     // posted / labels
     if (hasPosted) {
       g.fillStyle = C.muted; g.font = `400 11px ${fam}`;
-      if (postedStr) g.fillText(postedStr, bx + RX, by + 70);
+      if (postedStr) g.fillText(postedStr, bx + rx, by + 70);
       if (editedStr) {
-        const ex = editedOwnLine || !postedStr ? bx + RX : bx + RX + g.measureText(postedStr).width + 14;
+        const ex = editedOwnLine || !postedStr ? bx + rx : bx + rx + g.measureText(postedStr).width + 14;
         g.fillText(editedStr, ex, by + (editedOwnLine ? 85 : 70));
       }
     }
     g.font = `400 12px ${fam}`;
-    labels.forEach(([t, col], i) => { g.fillStyle = col; g.fillText(t, bx + RX, by + labelBase[i]); });
+    labels.forEach(([t, col], i) => { g.fillStyle = col; g.fillText(t, bx + rx, by + labelBase[i]); });
 
     // review text
-    rows.forEach((r, i) => drawRow(g, r, bx + RX, by + rowTops[i], fam));
+    rows.forEach((r, i) => drawRow(g, r, bx + rx, by + rowTops[i], fam));
 
     // controls
-    g.fillStyle = C.rule; g.fillRect(bx + RX, by + Math.round(rule), RW, 1);
+    g.fillStyle = C.rule; g.fillRect(bx + rx, by + Math.round(rule), RW, 1);
     if (p.buttons) {
       g.fillStyle = C.ask; g.font = `400 12px ${fam}`;
-      g.fillText(T.ask, bx + RX, by + askBase);
+      g.fillText(T.ask, bx + rx, by + askBase);
       const defs = [[T.yes, 7, 14, 4, 'up'], [T.no, 7, 14, 4, 'down'], [T.funny, 6, 13, 6.5, 'funny'], [T.award, 6, 10, 3, 'award']];
-      let x = bx + RX;
+      let x = bx + rx;
       g.font = `500 13px ${fam}`;
       for (const [label, pl, iw, gap, kind] of defs) {
         const tw = g.measureText(label).width, w = pl + iw + gap + tw + 6;
@@ -344,10 +361,10 @@
       }
     }
     g.fillStyle = C.found; g.font = `400 12px ${fam}`;
-    counts.forEach((t, i) => g.fillText(t, bx + RX, by + countFirst + 14 * i));
+    counts.forEach((t, i) => g.fillText(t, bx + rx, by + countFirst + 14 * i));
 
     // awards
-    let cx = bx + RX;
+    let cx = bx + rx;
     for (const a of p.awards) {
       g.font = `600 13px ${fam}`;
       const cw = a.n ? 7 + 18 + 8 + g.measureText(a.n).width + 9 : 29;
@@ -358,6 +375,8 @@
       if (a.n) { g.fillStyle = C.blue; g.font = `600 13px ${fam}`; g.fillText(a.n, cx + 7 + 18 + 8, by + awardTop + 19.5); }
       cx += cw + 8;
     }
+
+    g.restore();
 
     $('size').textContent = `${canvas.width} × ${canvas.height} px`;
   }
@@ -474,7 +493,7 @@
     Object.entries(f).forEach(([k, v]) => ($(k).value = v));
     $('text').value = SAMPLE;
     ['free', 'early', 'refunded'].forEach((k) => ($(k).checked = false));
-    $('buttons').checked = true;
+    $('buttons').checked = true; $('user').checked = true;
     ['namecolor', 'header', 'bg', 'lang', 'font'].forEach((k) => ($(k).selectedIndex = 0));
     $('scale').value = '2';
     document.querySelectorAll('.award').forEach((r, i) => { r.querySelector('select').value = AWARD_DEFAULTS[i][0]; r.querySelector('input').value = AWARD_DEFAULTS[i][1]; });
